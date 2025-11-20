@@ -3,10 +3,16 @@
 // FUNÇÃO DE CONEXÃO PDO
 // ----------------------------
 function conectarBD() {
-    $host = 'localhost';
+ /*   $host = 'localhost';
     $db   = 'premier_league';
     $user = 'pw2';
     $pass = '1234';
+    $charset = 'utf8mb4';*/
+
+    $host = 'localhost';
+    $db   = 'u506280443_josjoaDB';
+    $user = 'u506280443_josjoadbUser';
+    $pass = '7$&9N~8XpT';
     $charset = 'utf8mb4';
 
     $dsn = "mysql:host=$host;dbname=$db;charset=$charset";

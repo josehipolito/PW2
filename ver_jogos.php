@@ -11,7 +11,7 @@ function conectarBD() {
     $pass = '1234';
     $charset = 'utf8mb4';*/
 
-
+//ola
     $host = 'localhost';
     $db   = 'u506280443_josjoaDB';
     $user = 'u506280443_josjoadbUser';

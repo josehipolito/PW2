@@ -1,9 +1,4 @@
 <?php
-session_start();
-
-/* ===============================
-   FUNÇÃO DE LIGAÇÃO À BD
-================================ */
 function ligarBD($host, $db, $user, $pass, $charset) {
     return new PDO(
         "mysql:host=$host;dbname=$db;charset=$charset",
@@ -16,122 +11,116 @@ function ligarBD($host, $db, $user, $pass, $charset) {
     );
 }
 
-/* ===============================
-   CONFIGURAÇÃO DA BASE
-================================ */
-$host = 'localhost';
-$db   = 'u506280443_josjoaDB';
-$user = 'u506280443_josjoadbUser';
-$pass = '7$&9N~8XpT';
-$charset = 'utf8mb4';
+$pdo = ligarBD(
+    'localhost',
+    'u506280443_josjoaDB',
+    'u506280443_josjoadbUser',
+    '7$&9N~8XpT',
+    'utf8mb4'
+);
 
-/*$host = 'localhost';
-    $db   = 'premier_league';
-    $user = 'pw2';
-    $pass = '1234';
-    $charset = 'utf8mb4';*/
-
-/* ===============================
-   LIGAÇÃO LOCAL
-================================ */
-$pdoLocal  = ligarBD($host, $db, $user, $pass, $charset);
-
-/* ===============================
-   PROCESSAMENTO DO FORMULÁRIO
-================================ */
 $mensagem = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-
     $id_jornada = $_POST['id_jornada'];
-    $casa       = $_POST['casa'];
-    $fora       = $_POST['fora'];
+    $casa = $_POST['casa'];
+    $fora = $_POST['fora'];
     $golos_casa = $_POST['golos_casa'];
     $golos_fora = $_POST['golos_fora'];
 
-    // Validar que equipa casa != equipa fora
     if ($casa == $fora) {
-        $mensagem = 'A equipa da casa e a equipa de fora não podem ser iguais!';
+        $mensagem = '❌ Equipas iguais!';
     } else {
-        // Verificar se o jogo já existe
-        $stmt = $pdoLocal->prepare(
-            "SELECT COUNT(*) FROM jogos WHERE id_jornada=? AND equipa_casa=? AND equipa_fora=?"
+        $stmt = $pdo->prepare(
+            "INSERT INTO jogos (id_jornada, equipa_casa, equipa_fora)
+             VALUES (?,?,?)"
         );
         $stmt->execute([$id_jornada, $casa, $fora]);
-        $existeJogo = $stmt->fetchColumn() > 0;
+        $id_jogo = $pdo->lastInsertId();
 
-        if (!$existeJogo) {
-            // Inserir jogo
-            $stmt = $pdoLocal->prepare(
-                "INSERT INTO jogos (id_jornada, equipa_casa, equipa_fora) VALUES (?,?,?)"
-            );
-            $stmt->execute([$id_jornada, $casa, $fora]);
-            $id_jogo = $pdoLocal->lastInsertId();
+        $stmt = $pdo->prepare(
+            "INSERT INTO resultados (id_jogo, golos_casa, golos_fora)
+             VALUES (?,?,?)"
+        );
+        $stmt->execute([$id_jogo, $golos_casa, $golos_fora]);
 
-            // Inserir resultado
-            $stmt = $pdoLocal->prepare(
-                "INSERT INTO resultados (id_jogo, golos_casa, golos_fora) VALUES (?,?,?)"
-            );
-            $stmt->execute([$id_jogo, $golos_casa, $golos_fora]);
-
-            $mensagem = 'Jogo e resultado guardados com sucesso!';
-        } else {
-            $mensagem = 'Este jogo já existe na jornada selecionada!';
-        }
+        $mensagem = '✅ Jogo e resultado guardados!';
     }
 }
 
-/* ===============================
-   DADOS PARA FORMULÁRIO
-================================ */
-$jornadas = $pdoLocal->query("SELECT id, numero FROM jornadas ORDER BY numero")->fetchAll();
-$equipas  = $pdoLocal->query("SELECT id, nome FROM equipas ORDER BY nome")->fetchAll();
+$jornadas = $pdo->query("SELECT id, numero FROM jornadas ORDER BY numero")->fetchAll();
+$equipas  = $pdo->query("SELECT id, nome FROM equipas ORDER BY nome")->fetchAll();
 ?>
 
 <!DOCTYPE html>
 <html lang="pt">
 <head>
 <meta charset="UTF-8">
-<title>Adicionar Jogo e Resultado</title>
+<title>Adicionar Jogo</title>
+
 <style>
-body { font-family: Arial; background:#f4f4f9; padding:30px; }
-section { background:#fff; padding:20px; margin:20px auto; width:60%; border-radius:8px; }
-h1, h2 { text-align:center; }
-select, input, button { width:100%; padding:10px; margin-top:10px; }
-button { background:#007bff; color:#fff; border:none; cursor:pointer; }
-button:hover { background:#0056b3; }
-p.mensagem { text-align:center; font-weight:bold; color:green; }
-p.erro { text-align:center; font-weight:bold; color:red; }
+body {
+    background: linear-gradient(180deg, #37003c, #24002a);
+    font-family: Inter, Arial;
+    color: white;
+    padding: 40px;
+}
+
+.card {
+    max-width: 600px;
+    margin: auto;
+    background: #4b0055;
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 25px 50px rgba(0,0,0,.4);
+}
+
+h1 { text-align: center; }
+
+select, input, button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 12px;
+    border-radius: 8px;
+    border: none;
+}
+
+button {
+    background: #00ff85;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.msg { text-align: center; margin-top: 15px; }
 </style>
 </head>
+
 <body>
 
-<h1>✏️ Adicionar Jogo e Resultado</h1>
+<div class="card">
+<h1>✏️ Adicionar Jogo</h1>
 
 <?php if ($mensagem): ?>
-<p class="<?= strpos($mensagem,'sucesso') !== false ? 'mensagem' : 'erro' ?>"><?= $mensagem ?></p>
+<p class="msg"><?= $mensagem ?></p>
 <?php endif; ?>
 
-<section>
 <form method="post">
-<h2>Adicionar Jogo</h2>
-
 <select name="id_jornada" required>
-<option value="">Selecione a Jornada</option>
+<option value="">Jornada</option>
 <?php foreach ($jornadas as $j): ?>
 <option value="<?= $j['id'] ?>">Jornada <?= $j['numero'] ?></option>
 <?php endforeach; ?>
 </select>
 
 <select name="casa" required>
-<option value="">Selecione Equipa Casa</option>
+<option value="">Equipa Casa</option>
 <?php foreach ($equipas as $e): ?>
 <option value="<?= $e['id'] ?>"><?= $e['nome'] ?></option>
 <?php endforeach; ?>
 </select>
 
 <select name="fora" required>
-<option value="">Selecione Equipa Fora</option>
+<option value="">Equipa Fora</option>
 <?php foreach ($equipas as $e): ?>
 <option value="<?= $e['id'] ?>"><?= $e['nome'] ?></option>
 <?php endforeach; ?>
@@ -140,9 +129,9 @@ p.erro { text-align:center; font-weight:bold; color:red; }
 <input type="number" name="golos_casa" placeholder="Golos Casa" required>
 <input type="number" name="golos_fora" placeholder="Golos Fora" required>
 
-<button>Guardar Jogo e Resultado</button>
+<button>Guardar</button>
 </form>
-</section>
+</div>
 
 </body>
 </html>

@@ -19,6 +19,7 @@ $pdo = ligarBD(
     '7$&9N~8XpT',
     'utf8mb4'
 );
+
 /*$pdo = ligarBD(
     $host = 'localhost';
     $db   = 'premier_league';
@@ -30,7 +31,7 @@ $pdo = ligarBD(
 /* EQUIPAS */
 $equipas = $pdo->query("SELECT id, nome FROM equipas")->fetchAll();
 
-/* INICIALIZAR */
+/* INICIALIZAR CLASSIFICAÇÃO */
 $classificacao = [];
 foreach ($equipas as $e) {
     $classificacao[$e['id']] = [
@@ -96,80 +97,105 @@ usort($classificacao, function ($a, $b) {
 
 <style>
 body {
-    font-family: Arial, sans-serif;
-    background: #eef0f3;
-    padding: 30px;
+    margin: 0;
+    font-family: 'Inter', Arial, sans-serif;
+    background: linear-gradient(180deg, #37003c, #24002a);
+    color: white;
 }
-h1 {
+
+.container {
+    max-width: 900px;
+    margin: 40px auto;
+    background: #4b0055;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.4);
+}
+
+.header {
+    padding: 20px;
+    font-size: 1.4rem;
+    font-weight: 700;
     text-align: center;
-    margin-bottom: 20px;
+    background: #37003c;
 }
+
 table {
     width: 100%;
-    max-width: 1000px;
-    margin: auto;
     border-collapse: collapse;
-    background: #fff;
     font-size: 14px;
 }
+
 th {
-    background: #222;
-    color: #fff;
-    padding: 8px;
-    font-weight: normal;
+    padding: 10px;
+    background: #2a002e;
+    font-weight: 600;
+    color: #ddd;
 }
+
 td {
-    padding: 8px;
+    padding: 10px;
     text-align: center;
-    border-bottom: 1px solid #ddd;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
 }
+
 td.team {
     text-align: left;
-    font-weight: bold;
+    font-weight: 600;
 }
-tr.champions { background: #e6f2ff; }
-tr.europa { background: #f2f7e6; }
-tr.relegation { background: #ffe6e6; }
+
+/* ZONAS */
+tr.champions { background: rgba(0, 123, 255, 0.15); }
+tr.europa { background: rgba(0, 255, 133, 0.15); }
+tr.relegation { background: rgba(255, 0, 0, 0.15); }
+
+.position {
+    font-weight: bold;
+    opacity: 0.9;
+}
 </style>
 </head>
 
 <body>
 
-<h1>📊 Classificação</h1>
+<div class="container">
+    <div class="header">📊 Classificação Premier League</div>
 
-<table>
-<tr>
-    <th>#</th>
-    <th>Equipa</th>
-    <th>J</th>
-    <th>V</th>
-    <th>E</th>
-    <th>D</th>
-    <th>GM:GS</th>
-    <th>DG</th>
-    <th>P</th>
-</tr>
+    <table>
+        <tr>
+            <th>#</th>
+            <th>Equipa</th>
+            <th>J</th>
+            <th>V</th>
+            <th>E</th>
+            <th>D</th>
+            <th>GM</th>
+            <th>GS</th>
+            <th>DG</th>
+            <th>P</th>
+        </tr>
 
-<?php $pos = 1; foreach ($classificacao as $c): 
-    $class = '';
-    if ($pos <= 4) $class = 'champions';
-    elseif ($pos <= 6) $class = 'europa';
-    elseif ($pos > count($classificacao) - 3) $class = 'relegation';
-?>
-<tr class="<?= $class ?>">
-    <td><?= $pos ?></td>
-    <td class="team"><?= htmlspecialchars($c['nome']) ?></td>
-    <td><?= $c['j'] ?></td>
-    <td><?= $c['v'] ?></td>
-    <td><?= $c['e'] ?></td>
-    <td><?= $c['d'] ?></td>
-    <td><?= $c['gm'] ?>:<?= $c['gs'] ?></td>
-    <td><?= $c['gm'] - $c['gs'] ?></td>
-    <td><strong><?= $c['p'] ?></strong></td>
-</tr>
-<?php $pos++; endforeach; ?>
-
-</table>
+        <?php $pos = 1; foreach ($classificacao as $c):
+            $class = '';
+            if ($pos <= 4) $class = 'champions';
+            elseif ($pos <= 6) $class = 'europa';
+            elseif ($pos > count($classificacao) - 3) $class = 'relegation';
+        ?>
+        <tr class="<?= $class ?>">
+            <td class="position"><?= $pos ?></td>
+            <td class="team"><?= htmlspecialchars($c['nome']) ?></td>
+            <td><?= $c['j'] ?></td>
+            <td><?= $c['v'] ?></td>
+            <td><?= $c['e'] ?></td>
+            <td><?= $c['d'] ?></td>
+            <td><?= $c['gm'] ?></td>
+            <td><?= $c['gs'] ?></td>
+            <td><?= $c['gm'] - $c['gs'] ?></td>
+            <td><strong><?= $c['p'] ?></strong></td>
+        </tr>
+        <?php $pos++; endforeach; ?>
+    </table>
+</div>
 
 </body>
 </html>

@@ -12,6 +12,12 @@ function HomeButtons() {
           📅 Ver Jornadas
         </button>
       </a>
+
+      <a href="classificacao.php">
+        <button className="button view-button">
+          📊 Classificação
+        </button>
+      </a>
     </div>
   );
 }

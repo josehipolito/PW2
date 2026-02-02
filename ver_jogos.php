@@ -9,14 +9,19 @@ function conectarBD() {
 }
 
 $pdo = conectarBD();
-$id = (int)$_GET['id_jornada'];
+
+$id = (int)($_GET['id_jornada'] ?? 0);
+if (!$id) die("Jornada inválida");
 
 $jornada = $pdo->prepare("SELECT numero FROM jornadas WHERE id=?");
 $jornada->execute([$id]);
 $jornada = $jornada->fetch();
 
 $jogos = $pdo->prepare("
-SELECT ec.nome casa, ef.nome fora, r.golos_casa, r.golos_fora
+SELECT 
+  ec.nome casa, ec.logo logo_casa,
+  ef.nome fora, ef.logo logo_fora,
+  r.golos_casa, r.golos_fora
 FROM jogos j
 JOIN equipas ec ON ec.id=j.equipa_casa
 JOIN equipas ef ON ef.id=j.equipa_fora
@@ -35,10 +40,9 @@ $jogos->execute([$id]);
 <style>
 body {
     background: linear-gradient(180deg, #37003c, #24002a);
-    font-family: Inter;
+    font-family: Inter, Arial;
     color: white;
 }
-
 .container {
     max-width: 800px;
     margin: 40px auto;
@@ -46,16 +50,23 @@ body {
     padding: 30px;
     border-radius: 16px;
 }
-
 table {
     width: 100%;
     border-collapse: collapse;
 }
-
 td, th {
     padding: 12px;
     text-align: center;
     border-bottom: 1px solid rgba(255,255,255,.15);
+}
+.team {
+    display:flex;
+    align-items:center;
+    gap:10px;
+    justify-content:center;
+}
+.team img {
+    width:24px;
 }
 </style>
 </head>
@@ -74,9 +85,15 @@ td, th {
 
 <?php foreach ($jogos as $j): ?>
 <tr>
-    <td><?= $j['casa'] ?></td>
+    <td class="team">
+        <img src="<?= $j['logo_casa'] ?>">
+        <?= $j['casa'] ?>
+    </td>
     <td><?= $j['golos_casa'] ?? '-' ?> : <?= $j['golos_fora'] ?? '-' ?></td>
-    <td><?= $j['fora'] ?></td>
+    <td class="team">
+        <img src="<?= $j['logo_fora'] ?>">
+        <?= $j['fora'] ?>
+    </td>
 </tr>
 <?php endforeach; ?>
 

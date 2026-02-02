@@ -1,62 +1,41 @@
 <?php
-function ligarBD($host, $db, $user, $pass, $charset) {
-    return new PDO(
-        "mysql:host=$host;dbname=$db;charset=$charset",
-        $user,
-        $pass,
-        [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
-        ]
-    );
-}
+require 'config.php';
+$pdo = ligarBD();
 
-$pdo = ligarBD(
-    'localhost',
-    'u506280443_josjoaDB',
-    'u506280443_josjoadbUser',
-    '7$&9N~8XpT',
-    'utf8mb4'
-);
-/*$pdo = ligarBD(
-    $host = 'localhost';
-    $db   = 'premier_league';
-    $user = 'pw2';
-    $pass = '1234';
-    $charset = 'utf8mb4';
-);*/
-
-$mensagem = '';
+$msg = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $id_jornada = $_POST['id_jornada'];
-    $casa = $_POST['casa'];
-    $fora = $_POST['fora'];
-    $golos_casa = $_POST['golos_casa'];
-    $golos_fora = $_POST['golos_fora'];
-
-    if ($casa == $fora) {
-        $mensagem = '❌ Equipas iguais!';
+    if ($_POST['casa'] == $_POST['fora']) {
+        $msg = '❌ Equipas iguais!';
     } else {
         $stmt = $pdo->prepare(
             "INSERT INTO jogos (id_jornada, equipa_casa, equipa_fora)
              VALUES (?,?,?)"
         );
-        $stmt->execute([$id_jornada, $casa, $fora]);
-        $id_jogo = $pdo->lastInsertId();
+        $stmt->execute([
+            $_POST['id_jornada'],
+            $_POST['casa'],
+            $_POST['fora']
+        ]);
+
+        $idJogo = $pdo->lastInsertId();
 
         $stmt = $pdo->prepare(
             "INSERT INTO resultados (id_jogo, golos_casa, golos_fora)
              VALUES (?,?,?)"
         );
-        $stmt->execute([$id_jogo, $golos_casa, $golos_fora]);
+        $stmt->execute([
+            $idJogo,
+            $_POST['golos_casa'],
+            $_POST['golos_fora']
+        ]);
 
-        $mensagem = '✅ Jogo e resultado guardados!';
+        $msg = '✅ Jogo guardado com sucesso!';
     }
 }
 
-$jornadas = $pdo->query("SELECT id, numero FROM jornadas ORDER BY numero")->fetchAll();
-$equipas  = $pdo->query("SELECT id, nome FROM equipas ORDER BY nome")->fetchAll();
+$jornadas = $pdo->query("SELECT id, numero FROM jornadas")->fetchAll();
+$equipas = $pdo->query("SELECT id, nome FROM equipas")->fetchAll();
 ?>
 
 <!DOCTYPE html>
@@ -68,22 +47,16 @@ $equipas  = $pdo->query("SELECT id, nome FROM equipas ORDER BY nome")->fetchAll(
 <style>
 body {
     background: linear-gradient(180deg, #37003c, #24002a);
-    font-family: Inter, Arial;
+    font-family: Inter;
     color: white;
-    padding: 40px;
 }
-
 .card {
     max-width: 600px;
-    margin: auto;
+    margin: 40px auto;
     background: #4b0055;
-    border-radius: 16px;
     padding: 30px;
-    box-shadow: 0 25px 50px rgba(0,0,0,.4);
+    border-radius: 16px;
 }
-
-h1 { text-align: center; }
-
 select, input, button {
     width: 100%;
     padding: 12px;
@@ -91,25 +64,17 @@ select, input, button {
     border-radius: 8px;
     border: none;
 }
-
 button {
     background: #00ff85;
     font-weight: bold;
-    cursor: pointer;
 }
-
-.msg { text-align: center; margin-top: 15px; }
 </style>
 </head>
 
 <body>
-
 <div class="card">
 <h1>✏️ Adicionar Jogo</h1>
-
-<?php if ($mensagem): ?>
-<p class="msg"><?= $mensagem ?></p>
-<?php endif; ?>
+<p><?= $msg ?></p>
 
 <form method="post">
 <select name="id_jornada" required>
@@ -120,14 +85,14 @@ button {
 </select>
 
 <select name="casa" required>
-<option value="">Equipa Casa</option>
+<option value="">Casa</option>
 <?php foreach ($equipas as $e): ?>
 <option value="<?= $e['id'] ?>"><?= $e['nome'] ?></option>
 <?php endforeach; ?>
 </select>
 
 <select name="fora" required>
-<option value="">Equipa Fora</option>
+<option value="">Fora</option>
 <?php foreach ($equipas as $e): ?>
 <option value="<?= $e['id'] ?>"><?= $e['nome'] ?></option>
 <?php endforeach; ?>
@@ -139,6 +104,5 @@ button {
 <button>Guardar</button>
 </form>
 </div>
-
 </body>
 </html>

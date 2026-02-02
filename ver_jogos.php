@@ -1,27 +1,15 @@
 <?php
-function conectarBD() {
-    return new PDO(
-        "mysql:host=localhost;dbname=u506280443_josjoaDB;charset=utf8mb4",
-        "u506280443_josjoadbUser",
-        "7$&9N~8XpT",
-        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
-    );
-}
+require 'config.php';
+$pdo = ligarBD();
 
-$pdo = conectarBD();
-
-$id = (int)($_GET['id_jornada'] ?? 0);
-if (!$id) die("Jornada inválida");
+$id = (int)$_GET['id_jornada'];
 
 $jornada = $pdo->prepare("SELECT numero FROM jornadas WHERE id=?");
 $jornada->execute([$id]);
 $jornada = $jornada->fetch();
 
 $jogos = $pdo->prepare("
-SELECT 
-  ec.nome casa, ec.logo logo_casa,
-  ef.nome fora, ef.logo logo_fora,
-  r.golos_casa, r.golos_fora
+SELECT ec.nome casa, ef.nome fora, r.golos_casa, r.golos_fora
 FROM jogos j
 JOIN equipas ec ON ec.id=j.equipa_casa
 JOIN equipas ef ON ef.id=j.equipa_fora
@@ -40,7 +28,7 @@ $jogos->execute([$id]);
 <style>
 body {
     background: linear-gradient(180deg, #37003c, #24002a);
-    font-family: Inter, Arial;
+    font-family: Inter;
     color: white;
 }
 .container {
@@ -59,20 +47,10 @@ td, th {
     text-align: center;
     border-bottom: 1px solid rgba(255,255,255,.15);
 }
-.team {
-    display:flex;
-    align-items:center;
-    gap:10px;
-    justify-content:center;
-}
-.team img {
-    width:24px;
-}
 </style>
 </head>
 
 <body>
-
 <div class="container">
 <h1>Jornada <?= $jornada['numero'] ?></h1>
 
@@ -85,20 +63,12 @@ td, th {
 
 <?php foreach ($jogos as $j): ?>
 <tr>
-    <td class="team">
-        <img src="<?= $j['logo_casa'] ?>">
-        <?= $j['casa'] ?>
-    </td>
+    <td><?= $j['casa'] ?></td>
     <td><?= $j['golos_casa'] ?? '-' ?> : <?= $j['golos_fora'] ?? '-' ?></td>
-    <td class="team">
-        <img src="<?= $j['logo_fora'] ?>">
-        <?= $j['fora'] ?>
-    </td>
+    <td><?= $j['fora'] ?></td>
 </tr>
 <?php endforeach; ?>
-
 </table>
 </div>
-
 </body>
 </html>

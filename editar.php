@@ -18,6 +18,13 @@ $pdo = ligarBD(
     '7$&9N~8XpT',
     'utf8mb4'
 );
+/*$pdo = ligarBD(
+    $host = 'localhost';
+    $db   = 'premier_league';
+    $user = 'pw2';
+    $pass = '1234';
+    $charset = 'utf8mb4';
+);*/
 
 $mensagem = '';
 

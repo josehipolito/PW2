@@ -9,6 +9,7 @@ $equipas = $pdo->query("SELECT id, nome, logo FROM equipas")->fetchAll();
 $classificacao = [];
 foreach ($equipas as $e) {
     $classificacao[$e['id']] = [
+        'id' => $e['id'], // IMPORTANTE: Guardar o ID para o link
         'nome' => $e['nome'],
         'logo' => $e['logo'],
         'j' => 0, 'v' => 0, 'e' => 0, 'd' => 0,
@@ -122,6 +123,18 @@ td.team {
     gap: 10px;
 }
 
+/* LINK PARA A EQUIPA */
+td.team a {
+    color: white;
+    text-decoration: none;
+    transition: 0.2s;
+}
+
+td.team a:hover {
+    color: #00ff85; /* Verde Premier League */
+    text-decoration: underline;
+}
+
 /* LOGOS */
 td.team img {
     width: 26px;
@@ -141,6 +154,15 @@ tr.relegation { background: rgba(255,0,0,0.25); }
 .position {
     font-weight: bold;
 }
+
+.btn-voltar {
+    display: block;
+    width: fit-content;
+    margin: 10px auto;
+    color: #00ff85;
+    text-decoration: none;
+    font-size: 0.9rem;
+}
 </style>
 </head>
 
@@ -148,6 +170,7 @@ tr.relegation { background: rgba(255,0,0,0.25); }
 
 <div class="container">
 <div class="header"> Classificação Premier League</div>
+<a href="index.html" class="btn-voltar">← Voltar à Home</a>
 
 <table>
 <tr>
@@ -179,7 +202,9 @@ foreach ($classificacao as $c):
 
     <td class="team">
         <img src="imagens/<?= htmlspecialchars($c['logo']) ?>" alt="">
-        <?= htmlspecialchars($c['nome']) ?>
+        <a href="ver_equipa.php?id=<?= $c['id'] ?>">
+            <?= htmlspecialchars($c['nome']) ?>
+        </a>
     </td>
 
     <td><?= $c['j'] ?></td>

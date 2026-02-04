@@ -147,7 +147,7 @@ tr.relegation { background: rgba(255,0,0,0.25); }
 <body>
 
 <div class="container">
-<div class="header">📊 Classificação Premier League</div>
+<div class="header"> Classificação Premier League</div>
 
 <table>
 <tr>

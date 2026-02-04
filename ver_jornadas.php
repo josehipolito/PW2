@@ -1,6 +1,7 @@
 <?php
 require 'config.php';
-$pdo = ligarBD();
+//$pdo = ligarBD();
+$pdo = ligarBDstr();
 
 $jornadas = $pdo->query(
     "SELECT id, numero FROM jornadas ORDER BY numero"

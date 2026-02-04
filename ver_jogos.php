@@ -1,6 +1,7 @@
 <?php
 require 'config.php';
-$pdo = ligarBD();
+//$pdo = ligarBD();
+$pdo = ligarBDstr();
 
 /* VALIDAR ID DA JORNADA */
 if (!isset($_GET['id_jornada'])) {

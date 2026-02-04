@@ -1,6 +1,7 @@
 <?php
 require 'config.php';
-$pdo = ligarBD();
+//$pdo = ligarBD();
+$pdo = ligarBDstr();
 
 /* BUSCAR EQUIPAS */
 $equipas = $pdo->query("SELECT id, nome, logo FROM equipas")->fetchAll();

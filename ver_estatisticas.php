@@ -1,6 +1,7 @@
 <?php
 require 'config.php';
-$pdo = ligarBD();
+//$pdo = ligarBD();
+$pdo = ligarBDstr();
 
 // --- 1. ESTATÍSTICAS COLETIVAS (Golos e Médias) ---
 $sqlMedia = "SELECT AVG(golos_casa + golos_fora) as media FROM resultados";

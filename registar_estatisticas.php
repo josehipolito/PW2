@@ -1,6 +1,7 @@
 <?php
 require 'config.php';
-$pdo = ligarBD();
+//$pdo = ligarBD();
+$pdo = ligarBDstr();
 
 $mensagem = "";
 

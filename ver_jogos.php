@@ -2,20 +2,29 @@
 require 'config.php';
 $pdo = ligarBD();
 
+/* VALIDAR ID DA JORNADA */
+if (!isset($_GET['id_jornada'])) {
+    die('Jornada inválida');
+}
+
 $id = (int)$_GET['id_jornada'];
 
-/* Jornada */
-$stmt = $pdo->prepare("SELECT numero FROM jornadas WHERE id=?");
+/* OBTÉM JORNADA */
+$stmt = $pdo->prepare("SELECT numero FROM jornadas WHERE id = ?");
 $stmt->execute([$id]);
 $jornada = $stmt->fetch();
 
-/* Jogos com logos */
-$jogos = $pdo->prepare("
+if (!$jornada) {
+    die('Jornada não encontrada');
+}
+
+/* OBTÉM JOGOS COM LOGOS */
+$stmt = $pdo->prepare("
     SELECT 
-        ec.nome  AS casa,
-        ec.logo  AS logo_casa,
-        ef.nome  AS fora,
-        ef.logo  AS logo_fora,
+        ec.nome AS casa,
+        ec.logo AS logo_casa,
+        ef.nome AS fora,
+        ef.logo AS logo_fora,
         r.golos_casa,
         r.golos_fora
     FROM jogos j
@@ -24,7 +33,8 @@ $jogos = $pdo->prepare("
     LEFT JOIN resultados r ON r.id_jogo = j.id
     WHERE j.id_jornada = ?
 ");
-$jogos->execute([$id]);
+$stmt->execute([$id]);
+$jogos = $stmt->fetchAll();
 ?>
 
 <!DOCTYPE html>
@@ -35,28 +45,42 @@ $jogos->execute([$id]);
 
 <style>
 body {
+    margin: 0;
     background: linear-gradient(180deg, #37003c, #24002a);
-    font-family: Inter, sans-serif;
+    font-family: Inter, Arial, sans-serif;
     color: white;
 }
 
 .container {
-    max-width: 850px;
+    max-width: 900px;
     margin: 40px auto;
     background: #4b0055;
     padding: 30px;
-    border-radius: 16px;
+    border-radius: 18px;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.4);
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 25px;
 }
 
 table {
     width: 100%;
     border-collapse: collapse;
+    font-size: 15px;
 }
 
-td, th {
+th {
+    padding: 12px;
+    background: #2a002e;
+    font-weight: 600;
+}
+
+td {
     padding: 14px;
     text-align: center;
-    border-bottom: 1px solid rgba(255,255,255,.15);
+    border-bottom: 1px solid rgba(255,255,255,0.15);
 }
 
 .team {
@@ -64,6 +88,7 @@ td, th {
     align-items: center;
     gap: 10px;
     justify-content: center;
+    font-weight: 600;
 }
 
 .team img {
@@ -71,9 +96,10 @@ td, th {
     height: 28px;
     object-fit: contain;
 }
+
 .result {
     font-weight: bold;
-    font-size: 1.1rem;
+    font-size: 1.15rem;
 }
 </style>
 </head>
@@ -81,7 +107,7 @@ td, th {
 <body>
 
 <div class="container">
-    <h1 style="text-align:center;">Jornada <?= $jornada['numero'] ?></h1>
+    <h1>Jornada <?= $jornada['numero'] ?></h1>
 
     <table>
         <tr>
@@ -94,7 +120,8 @@ td, th {
         <tr>
             <td>
                 <div class="team">
-                    <img src="imagens/<?= htmlspecialchars($j['logo_casa']) ?>" alt="<?= htmlspecialchars($j['casa']) ?>">
+                    <img src="imagens/<?= rawurlencode($j['logo_casa']) ?>"
+                         alt="<?= htmlspecialchars($j['casa']) ?>">
                     <?= htmlspecialchars($j['casa']) ?>
                 </div>
             </td>
@@ -105,7 +132,8 @@ td, th {
 
             <td>
                 <div class="team">
-                    <img src="imagens/<?= htmlspecialchars($j['logo_fora']) ?>" alt="<?= htmlspecialchars($j['fora']) ?>">
+                    <img src="imagens/<?= rawurlencode($j['logo_fora']) ?>"
+                         alt="<?= htmlspecialchars($j['fora']) ?>">
                     <?= htmlspecialchars($j['fora']) ?>
                 </div>
             </td>
@@ -116,4 +144,3 @@ td, th {
 
 </body>
 </html>
-

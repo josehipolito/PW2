@@ -18,10 +18,11 @@ function HomeButtons() {
           📊 Classificação
         </button>
       </a>
+
       <a href="ver_estatisticas.php">
-         <button className="button view-button">
-          📊 Estatísticas da Liga
-         </button>
+        <button className="button view-button">
+          📈 Estatísticas da Liga
+        </button>
       </a>
     </div>
   );

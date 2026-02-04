@@ -24,6 +24,11 @@ function HomeButtons() {
           📈 Estatísticas da Liga
         </button>
       </a>
+      <a href="registar_estatisticas.php">
+        <button className="button edit-button" style={{ background: 'linear-gradient(135deg, #ff9800, #f57c00)' }}>
+          ⚽ Registar Estatísticas Individuais
+        </button>
+      </a>
     </div>
   );
 }

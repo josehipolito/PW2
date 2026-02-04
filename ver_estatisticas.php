@@ -2,105 +2,142 @@
 require 'config.php';
 $pdo = ligarBD();
 
-// 1. Média de Golos da Liga
+// --- ESTATÍSTICAS GERAIS ---
 $sqlMedia = "SELECT AVG(golos_casa + golos_fora) as media FROM resultados";
-$mediaGolos = $pdo->query($sqlMedia)->fetch()['media'];
+$resMedia = $pdo->query($sqlMedia)->fetch();
+$mediaGolos = $resMedia ? $resMedia['media'] : 0;
 
-// 2. Ataque e Defesa (Usando a lógica da classificação)
-$equipas = $pdo->query("SELECT id, nome, logo FROM equipas")->fetchAll();
-$stats = [];
-foreach ($equipas as $e) {
-    $stats[$e['id']] = ['nome' => $e['nome'], 'logo' => $e['logo'], 'gm' => 0, 'gs' => 0, 'jogadores' => 0];
+// --- CONSULTA DE JOGADORES DESTACADOS POR POSIÇÃO ---
+// Nota: Aqui podes futuramente adicionar ORDER BY golos ou minutos 
+// Por agora, vamos listar alguns nomes de destaque de cada setor
+function getDestaques($pdo, $posicao) {
+    $stmt = $pdo->prepare("SELECT j.nome, j.numero, e.nome as equipa_nome, e.logo 
+                           FROM jogadores j 
+                           JOIN equipas e ON j.id_equipa = e.id 
+                           WHERE j.posicao = ? 
+                           LIMIT 5");
+    $stmt->execute([$posicao]);
+    return $stmt->fetchAll();
 }
 
-$resultados = $pdo->query("SELECT j.equipa_casa, j.equipa_fora, r.golos_casa, r.golos_fora FROM jogos j JOIN resultados r ON r.id_jogo = j.id")->fetchAll();
-foreach ($resultados as $r) {
-    $stats[$r['equipa_casa']]['gm'] += $r['golos_casa'];
-    $stats[$r['equipa_casa']]['gs'] += $r['golos_fora'];
-    $stats[$r['equipa_fora']]['gm'] += $r['golos_fora'];
-    $stats[$r['equipa_fora']]['gs'] += $r['golos_casa'];
-}
-
-// 3. Contagem de Jogadores por Equipa
-$jogadoresCount = $pdo->query("SELECT id_equipa, COUNT(*) as total FROM jogadores GROUP BY id_equipa")->fetchAll();
-foreach ($jogadoresCount as $jc) {
-    if (isset($stats[$jc['id_equipa']])) {
-        $stats[$jc['id_equipa']]['jogadores'] = $jc['total'];
-    }
-}
-
-// Ordenar para obter os melhores
-$melhorAtaque = $stats;
-usort($melhorAtaque, fn($a, $b) => $b['gm'] <=> $a['gm']);
-
-$melhorDefesa = $stats;
-usort($melhorDefesa, fn($a, $b) => $a['gs'] <=> $b['gs']);
-
-$plantelMaisNumeroso = $stats;
-usort($plantelMaisNumeroso, fn($a, $b) => $b['jogadores'] <=> $a['jogadores']);
+$melhoresGR = getDestaques($pdo, 'Guarda-redes');
+$melhoresDEF = getDestaques($pdo, 'Defesa');
+$melhoresMED = getDestaques($pdo, 'Médio');
+$melhoresAV = getDestaques($pdo, 'Avançado');
 ?>
 
 <!DOCTYPE html>
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
-    <title>Estatísticas da Liga</title>
+    <title>Estatísticas Avançadas - PL</title>
     <style>
         body { background: linear-gradient(180deg, #37003c, #24002a); font-family: 'Inter', sans-serif; color: white; padding: 20px; }
-        .container { max-width: 1000px; margin: auto; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 30px; }
-        .card { background: #4b0055; padding: 20px; border-radius: 15px; text-align: center; border-bottom: 4px solid #00ff85; }
-        .card h3 { color: #00ff85; margin-bottom: 15px; }
-        .stat-value { font-size: 2rem; font-weight: bold; margin: 10px 0; }
-        .team-info { display: flex; align-items: center; justify-content: center; gap: 10px; }
-        .team-info img { width: 40px; height: 40px; object-fit: contain; background: white; border-radius: 5px; padding: 2px; }
-        .back-link { display: inline-block; margin-top: 20px; color: #00ff85; text-decoration: none; }
+        .container { max-width: 1100px; margin: auto; }
+        
+        /* Layout em Grelha para os Tops */
+        .grid-tops { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); 
+            gap: 20px; 
+            margin-top: 40px; 
+        }
+        
+        .top-card { 
+            background: rgba(255, 255, 255, 0.05); 
+            border-radius: 15px; 
+            padding: 15px; 
+            border-top: 4px solid #00ff85;
+        }
+        
+        .top-card h3 { 
+            text-align: center; 
+            color: #00ff85; 
+            border-bottom: 1px solid rgba(255,255,255,0.1); 
+            padding-bottom: 10px; 
+        }
+
+        .player-row {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .player-row img { width: 25px; height: 25px; margin-right: 10px; background: white; border-radius: 3px; }
+        .player-info { flex-grow: 1; font-size: 0.9rem; }
+        .player-num { font-weight: bold; color: #00ff85; margin-right: 5px; }
+
+        .media-destaque {
+            text-align: center;
+            background: #4b0055;
+            padding: 20px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>📊 Estatísticas da Premier League</h1>
-    
-    <div class="card" style="max-width: 400px; margin: auto;">
-        <h3>Média de Golos/Jogo</h3>
-        <div class="stat-value"><?= number_format($mediaGolos, 2) ?></div>
-        <p>Total de espetáculo na liga!</p>
+    <div class="media-destaque">
+        <h1>📊 Estatísticas de Rendimento</h1>
+        <p>Média de Golos da Liga: <strong><?= number_format($mediaGolos, 2) ?></strong></p>
     </div>
 
-    <div class="grid">
-        <div class="card">
-            <h3>🔥 Melhor Ataque</h3>
-            <div class="team-info">
-                <img src="imagens/<?= $melhorAtaque[0]['logo'] ?>">
-                <span><?= $melhorAtaque[0]['nome'] ?></span>
+    <div class="grid-tops">
+        <div class="top-card">
+            <h3>🧤 Top Guarda-Redes</h3>
+            <?php foreach($melhoresGR as $p): ?>
+            <div class="player-row">
+                <img src="imagens/<?= $p['logo'] ?>">
+                <div class="player-info">
+                    <span class="player-num"><?= $p['numero'] ?></span> <?= $p['nome'] ?>
+                </div>
             </div>
-            <div class="stat-value"><?= $melhorAtaque[0]['gm'] ?></div>
-            <p>Golos Marcados</p>
+            <?php endforeach; ?>
         </div>
 
-        <div class="card">
-            <h3>🛡️ Melhor Defesa</h3>
-            <div class="team-info">
-                <img src="imagens/<?= $melhorDefesa[0]['logo'] ?>">
-                <span><?= $melhorDefesa[0]['nome'] ?></span>
+        <div class="top-card">
+            <h3>🛡️ Top Defesas</h3>
+            <?php foreach($melhoresDEF as $p): ?>
+            <div class="player-row">
+                <img src="imagens/<?= $p['logo'] ?>">
+                <div class="player-info">
+                    <span class="player-num"><?= $p['numero'] ?></span> <?= $p['nome'] ?>
+                </div>
             </div>
-            <div class="stat-value"><?= $melhorDefesa[0]['gs'] ?></div>
-            <p>Golos Sofridos</p>
+            <?php endforeach; ?>
         </div>
 
-        <div class="card">
-            <h3>👥 Plantel Mais Extenso</h3>
-            <div class="team-info">
-                <img src="imagens/<?= $plantelMaisNumeroso[0]['logo'] ?>">
-                <span><?= $plantelMaisNumeroso[0]['nome'] ?></span>
+        <div class="top-card">
+            <h3>🎯 Top Médios</h3>
+            <?php foreach($melhoresMED as $p): ?>
+            <div class="player-row">
+                <img src="imagens/<?= $p['logo'] ?>">
+                <div class="player-info">
+                    <span class="player-num"><?= $p['numero'] ?></span> <?= $p['nome'] ?>
+                </div>
             </div>
-            <div class="stat-value"><?= $plantelMaisNumeroso[0]['jogadores'] ?></div>
-            <p>Jogadores Inscritos</p>
+            <?php endforeach; ?>
+        </div>
+
+        <div class="top-card">
+            <h3>⚽ Top Avançados</h3>
+            <?php foreach($melhoresAV as $p): ?>
+            <div class="player-row">
+                <img src="imagens/<?= $p['logo'] ?>">
+                <div class="player-info">
+                    <span class="player-num"><?= $p['numero'] ?></span> <?= $p['nome'] ?>
+                </div>
+            </div>
+            <?php endforeach; ?>
         </div>
     </div>
 
-    <a href="index.html" class="back-link">← Voltar à Home</a>
+    <p style="text-align: center; margin-top: 40px;">
+        <a href="index.html" style="color: #00ff85; text-decoration: none;">← Voltar ao Início</a>
+    </p>
 </div>
 
 </body>
